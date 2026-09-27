@@ -19,6 +19,14 @@ class _ListScreenState extends State<ListScreen> {
   RecipeSortOrder _sortOrder = RecipeSortOrder.title;
   List<String> get _categories => ['Tout', ...RecipeManager.categories];
 
+  void _resetFilters() {
+    setState(() {
+      _searchQuery = '';
+      _selectedCategory = 'Tout';
+      _sortOrder = RecipeSortOrder.title;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -89,6 +97,30 @@ class _ListScreenState extends State<ListScreen> {
                       ),
                     );
                   },
+                ),
+              ),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '${filteredRecipes.length} recette${filteredRecipes.length > 1 ? 's' : ''}',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    if (_searchQuery.isNotEmpty ||
+                        _selectedCategory != 'Tout' ||
+                        _sortOrder != RecipeSortOrder.title)
+                      TextButton.icon(
+                        onPressed: _resetFilters,
+                        icon: const Icon(Icons.filter_alt_off, size: 18),
+                        label: const Text('Réinitialiser'),
+                      ),
+                  ],
                 ),
               ),
               const SizedBox(height: 10),

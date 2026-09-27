@@ -22,11 +22,32 @@ class FavoritesScreen extends StatelessWidget {
             context,
           ).search().where((recipe) => recipe.isFavorite).toList();
           if (favorites.isEmpty) {
-            return const Center(
+            return Center(
               child: Padding(
-                padding: EdgeInsets.all(24),
-                child: Text(
-                  'Aucun favori pour le moment. Touchez le cœur d’une recette pour la retrouver ici.',
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.favorite_border,
+                      size: 56,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Aucun favori pour le moment.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Touchez le cœur d’une recette pour la retrouver ici.',
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
               ),
             );
@@ -40,25 +61,43 @@ class FavoritesScreen extends StatelessWidget {
                   : constraints.maxWidth >= 480
                   ? 2
                   : 1;
-              return GridView.builder(
-                padding: const EdgeInsets.all(12),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: columns,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  mainAxisExtent: 220,
-                ),
-                itemCount: favorites.length,
-                itemBuilder: (context, index) {
-                  final recipe = favorites[index];
-                  return RecipeCard(
-                    recipe: recipe,
-                    onTap: () => context.pushNamed(
-                      'recipe-details',
-                      pathParameters: {'id': recipe.id},
+              return Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        '${favorites.length} favori${favorites.length > 1 ? 's' : ''}',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
-                  );
-                },
+                  ),
+                  Expanded(
+                    child: GridView.builder(
+                      padding: const EdgeInsets.all(12),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: columns,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        mainAxisExtent: 220,
+                      ),
+                      itemCount: favorites.length,
+                      itemBuilder: (context, index) {
+                        final recipe = favorites[index];
+                        return RecipeCard(
+                          recipe: recipe,
+                          onTap: () => context.pushNamed(
+                            'recipe-details',
+                            pathParameters: {'id': recipe.id},
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
               );
             },
           );
