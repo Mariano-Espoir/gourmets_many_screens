@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../data/recipe_data.dart';
+import '../data/recipe_manager.dart';
+import '../models/recipe.dart';
 import '../widgets/search_bar_widget.dart';
 import '../widgets/recipe_card.dart';
 import '../widgets/theme_toggle_button.dart';
@@ -15,7 +16,8 @@ class ListScreen extends StatefulWidget {
 class _ListScreenState extends State<ListScreen> {
   String _searchQuery = '';
   String _selectedCategory = 'Tout';
-  List<String> get _categories => ['Tout', ...RecipeRepository.categories];
+  RecipeSortOrder _sortOrder = RecipeSortOrder.title;
+  List<String> get _categories => ['Tout', ...RecipeManager.categories];
 
   @override
   Widget build(BuildContext context) {
@@ -29,25 +31,33 @@ class _ListScreenState extends State<ListScreen> {
             icon: const Icon(Icons.favorite),
             onPressed: () => context.pushNamed('favorites'),
           ),
+          PopupMenuButton<RecipeSortOrder>(
+            tooltip: 'Trier les recettes',
+            initialValue: _sortOrder,
+            onSelected: (sortOrder) => setState(() => _sortOrder = sortOrder),
+            itemBuilder: (context) => const [
+              PopupMenuItem(
+                value: RecipeSortOrder.title,
+                child: Text('Trier par nom'),
+              ),
+              PopupMenuItem(
+                value: RecipeSortOrder.duration,
+                child: Text('Trier par durée'),
+              ),
+            ],
+            icon: const Icon(Icons.sort),
+          ),
           const ThemeToggleButton(),
         ],
       ),
       body: ValueListenableBuilder<List<Recipe>>(
-        valueListenable: RecipeRepository.recipesNotifier,
+        valueListenable: RecipeManagerScope.of(context).recipesNotifier,
         builder: (context, recipesList, child) {
-          // Filtrage intelligent combinant la catégorie et la recherche textuelle
-          final filteredRecipes = recipesList.where((recipe) {
-            final matchesCategory =
-                _selectedCategory == 'Tout' ||
-                recipe.category == _selectedCategory;
-            final query = _searchQuery.trim().toLowerCase();
-            final matchesSearch =
-                recipe.title.toLowerCase().contains(query) ||
-                recipe.ingredients.any(
-                  (ingredient) => ingredient.toLowerCase().contains(query),
-                );
-            return matchesCategory && matchesSearch;
-          }).toList();
+          final filteredRecipes = RecipeManagerScope.of(context).search(
+            query: _searchQuery,
+            category: _selectedCategory,
+            sortOrder: _sortOrder,
+          );
 
           return Column(
             children: [

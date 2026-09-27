@@ -7,22 +7,39 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:many_screens/data/recipe_data.dart';
+import 'package:many_screens/data/recipe_manager.dart';
+import 'package:many_screens/data/recipe_repository.dart';
+import 'package:many_screens/data/sample_recipes.dart';
 import 'package:many_screens/main.dart';
+import 'package:many_screens/models/recipe.dart';
 import 'package:many_screens/routes/app_router.dart';
 import 'package:many_screens/theme/app_theme.dart';
 
 void main() {
-  setUp(() {
+  late RecipeManager manager;
+
+  setUp(() async {
     ThemeController.mode.value = ThemeMode.light;
+    SharedPreferences.setMockInitialValues({});
+    final repository = JsonRecipeRepository(
+      preferences: await SharedPreferences.getInstance(),
+      storageKey: 'test-recipes',
+      encode: (recipe) => recipe.toJson(),
+      decode: Recipe.fromJson,
+    );
+    manager = RecipeManager(repository: repository);
+    await manager.initialize(initialRecipes: sampleRecipes);
     appRouter.go('/');
   });
+
+  tearDown(() => manager.dispose());
 
   testWidgets('home navigates to recipe list and search filters recipes', (
     tester,
   ) async {
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(MyApp(recipeManager: manager));
     await tester.tap(find.text('Découvrir les recettes'));
     await tester.pumpAndSettle();
 
@@ -36,7 +53,7 @@ void main() {
   });
 
   testWidgets('recipe detail receives its route parameter', (tester) async {
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(MyApp(recipeManager: manager));
     await tester.tap(find.text('Découvrir les recettes'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Pâtes Carbonara Traditionnelles'));
@@ -48,7 +65,7 @@ void main() {
   });
 
   testWidgets('recipe form validates and adds a recipe', (tester) async {
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(MyApp(recipeManager: manager));
     await tester.tap(find.text('Ajouter une recette'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Sauvegarder'));
@@ -63,7 +80,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      RecipeRepository.recipesNotifier.value.any(
+      manager.recipesNotifier.value.any(
         (recipe) => recipe.title == 'Soupe de test',
       ),
       isTrue,
@@ -71,7 +88,7 @@ void main() {
   });
 
   testWidgets('theme toggle switches between light and dark', (tester) async {
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(MyApp(recipeManager: manager));
     expect(ThemeController.mode.value, ThemeMode.light);
     await tester.tap(find.byTooltip('Activer le thème sombre'));
     await tester.pumpAndSettle();

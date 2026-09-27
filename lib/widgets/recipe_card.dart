@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../data/recipe_data.dart';
+import '../data/recipe_exceptions.dart';
+import '../data/recipe_manager.dart';
+import '../models/recipe.dart';
 import 'recipe_image.dart';
 
 class RecipeCard extends StatelessWidget {
@@ -57,8 +59,22 @@ class RecipeCard extends StatelessWidget {
                         color: recipe.isFavorite ? Colors.red : Colors.grey,
                         size: 20,
                       ),
-                      onPressed: () =>
-                          RecipeRepository.toggleFavorite(recipe.id),
+                      tooltip: recipe.isFavorite
+                          ? 'Retirer des favoris'
+                          : 'Ajouter aux favoris',
+                      onPressed: () async {
+                        try {
+                          await RecipeManagerScope.of(
+                            context,
+                          ).toggleFavorite(recipe.id);
+                        } on RecipeException catch (error) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(error.message)),
+                            );
+                          }
+                        }
+                      },
                     ),
                   ),
                 ),

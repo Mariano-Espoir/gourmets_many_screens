@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../data/recipe_data.dart';
+import '../data/recipe_exceptions.dart';
+import '../data/recipe_manager.dart';
+import '../models/recipe.dart';
 import '../widgets/responsive_layout.dart';
 import '../widgets/recipe_image.dart';
 import '../widgets/theme_toggle_button.dart';
@@ -11,7 +13,7 @@ class DetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<List<Recipe>>(
-      valueListenable: RecipeRepository.recipesNotifier,
+      valueListenable: RecipeManagerScope.of(context).recipesNotifier,
       builder: (context, list, child) {
         final matches = list.where((recipe) => recipe.id == recipeId);
         if (matches.isEmpty) {
@@ -31,7 +33,55 @@ class DetailScreen extends StatelessWidget {
                   recipe.isFavorite ? Icons.favorite : Icons.favorite_border,
                   color: recipe.isFavorite ? Colors.red : null,
                 ),
-                onPressed: () => RecipeRepository.toggleFavorite(recipe.id),
+                onPressed: () async {
+                  try {
+                    await RecipeManagerScope.of(
+                      context,
+                    ).toggleFavorite(recipe.id);
+                  } on RecipeException catch (error) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text(error.message)));
+                    }
+                  }
+                },
+              ),
+              IconButton(
+                tooltip: 'Supprimer la recette',
+                icon: const Icon(Icons.delete_outline),
+                onPressed: () async {
+                  final shouldDelete = await showDialog<bool>(
+                    context: context,
+                    builder: (dialogContext) => AlertDialog(
+                      title: const Text('Supprimer cette recette ?'),
+                      content: Text('« ${recipe.title} » sera supprimée.'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(dialogContext, false),
+                          child: const Text('Annuler'),
+                        ),
+                        FilledButton(
+                          onPressed: () => Navigator.pop(dialogContext, true),
+                          child: const Text('Supprimer'),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (shouldDelete != true || !context.mounted) return;
+                  try {
+                    await RecipeManagerScope.of(
+                      context,
+                    ).deleteRecipe(recipe.id);
+                    if (context.mounted) Navigator.of(context).pop();
+                  } on RecipeException catch (error) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text(error.message)));
+                    }
+                  }
+                },
               ),
               const ThemeToggleButton(),
             ],

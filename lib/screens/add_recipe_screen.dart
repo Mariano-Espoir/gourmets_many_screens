@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../data/recipe_data.dart';
+import '../data/recipe_exceptions.dart';
+import '../data/recipe_manager.dart';
 
 class AddRecipeScreen extends StatefulWidget {
   const AddRecipeScreen({super.key});
@@ -16,6 +17,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   final _ingredientsController = TextEditingController();
   String _selectedCategory = 'Plat';
   String _selectedDifficulty = 'Facile';
+  bool _isSaving = false;
 
   @override
   void dispose() {
@@ -25,22 +27,33 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     super.dispose();
   }
 
-  void _submitData() {
+  Future<void> _submitData() async {
     if (!_formKey.currentState!.validate()) return;
 
+    setState(() => _isSaving = true);
     final ingredients = _ingredientsController.text
         .split(RegExp(r'[,\n]'))
         .map((ingredient) => ingredient.trim())
         .where((ingredient) => ingredient.isNotEmpty)
         .toList();
-    RecipeRepository.addRecipe(
-      title: _titleController.text.trim(),
-      category: _selectedCategory,
-      duration: '${_durationController.text.trim()} min',
-      difficulty: _selectedDifficulty,
-      ingredients: ingredients,
-    );
-    context.pop();
+    try {
+      await RecipeManagerScope.of(context).addRecipe(
+        title: _titleController.text,
+        category: _selectedCategory,
+        durationMinutes: int.parse(_durationController.text.trim()),
+        difficulty: _selectedDifficulty,
+        ingredients: ingredients,
+      );
+      if (mounted) context.pop();
+    } on RecipeException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.message)));
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   @override
@@ -83,7 +96,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
               DropdownButtonFormField<String>(
                 initialValue: _selectedCategory,
                 decoration: const InputDecoration(labelText: 'Catégorie'),
-                items: RecipeRepository.categories.map((category) {
+                items: RecipeManager.categories.map((category) {
                   return DropdownMenuItem(
                     value: category,
                     child: Text(category),
@@ -99,7 +112,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
               DropdownButtonFormField<String>(
                 initialValue: _selectedDifficulty,
                 decoration: const InputDecoration(labelText: 'Difficulté'),
-                items: RecipeRepository.difficulties.map((difficulty) {
+                items: RecipeManager.difficulties.map((difficulty) {
                   return DropdownMenuItem(
                     value: difficulty,
                     child: Text(difficulty),
@@ -134,8 +147,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
               ),
               const SizedBox(height: 30),
               ElevatedButton(
-                onPressed: _submitData,
-                child: const Text('Sauvegarder'),
+                onPressed: _isSaving ? null : _submitData,
+                child: _isSaving
+                    ? const CircularProgressIndicator()
+                    : const Text('Sauvegarder'),
               ),
             ],
           ),

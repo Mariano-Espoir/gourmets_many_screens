@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../data/recipe_data.dart';
+import '../data/recipe_manager.dart';
+import '../models/recipe.dart';
 import '../widgets/recipe_card.dart';
 import '../widgets/theme_toggle_button.dart';
 
@@ -15,11 +16,11 @@ class FavoritesScreen extends StatelessWidget {
         actions: const [ThemeToggleButton()],
       ),
       body: ValueListenableBuilder<List<Recipe>>(
-        valueListenable: RecipeRepository.recipesNotifier,
+        valueListenable: RecipeManagerScope.of(context).recipesNotifier,
         builder: (context, recipes, child) {
-          final favorites = recipes
-              .where((recipe) => recipe.isFavorite)
-              .toList();
+          final favorites = RecipeManagerScope.of(
+            context,
+          ).search().where((recipe) => recipe.isFavorite).toList();
           if (favorites.isEmpty) {
             return const Center(
               child: Padding(
