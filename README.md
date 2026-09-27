@@ -47,6 +47,20 @@ flutter test
 
 Les 16 tests couvrent la navigation, le filtrage, la route détail, le formulaire et le thème, ainsi que le `RecipeManager` (tri, validation métier, favoris, suppression, exceptions), le repository JSON (sauvegarde/restauration et données corrompues) et un faux repository en mémoire pour l’isolation.
 
+## Démo web GitHub Pages
+
+La version web de l’application est accessible ici :
+
+https://Mariano-Espoir.github.io/gourmets_many_screens/
+
+Pour générer la build web locale :
+
+```sh
+flutter build web
+```
+
+Pour publier la version web sur GitHub Pages, la branche `gh-pages` doit contenir le contenu du dossier `build/web`.
+
 ## Structure principale
 
 ```text
