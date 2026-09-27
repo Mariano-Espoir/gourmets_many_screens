@@ -14,6 +14,8 @@ class RecipeManager extends ChangeNotifier {
   final ValueNotifier<List<Recipe>> recipesNotifier = ValueNotifier([]);
   bool _initialized = false;
 
+  bool get isInitialized => _initialized;
+
   RecipeManager({required this._repository});
 
   Future<void> initialize({required List<Recipe> initialRecipes}) async {
