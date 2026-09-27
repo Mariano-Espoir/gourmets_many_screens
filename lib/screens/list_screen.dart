@@ -118,7 +118,7 @@ class _ListScreenState extends State<ListScreen> {
                                   crossAxisCount: crossAxisCount,
                                   crossAxisSpacing: 12,
                                   mainAxisSpacing: 12,
-                                  childAspectRatio: 0.85,
+                                  mainAxisExtent: 220,
                                 ),
                             itemCount: filteredRecipes.length,
                             itemBuilder: (context, index) {

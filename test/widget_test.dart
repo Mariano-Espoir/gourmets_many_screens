@@ -16,6 +16,7 @@ import 'package:many_screens/main.dart';
 import 'package:many_screens/models/recipe.dart';
 import 'package:many_screens/routes/app_router.dart';
 import 'package:many_screens/theme/app_theme.dart';
+import 'package:many_screens/widgets/recipe_card.dart';
 
 void main() {
   late RecipeManager manager;
@@ -45,11 +46,23 @@ void main() {
 
     expect(find.text('Explorateur Gourmet'), findsOneWidget);
     expect(find.text('Pâtes Carbonara Traditionnelles'), findsOneWidget);
+    expect(tester.getSize(find.byType(RecipeCard).first).height, 220);
 
     await tester.enterText(find.byType(TextField), 'mousse');
     await tester.pumpAndSettle();
     expect(find.text('Mousse au Chocolat Intense'), findsOneWidget);
     expect(find.text('Pâtes Carbonara Traditionnelles'), findsNothing);
+  });
+
+  testWidgets('home previews recipes and opens favorites', (tester) async {
+    await tester.pumpWidget(MyApp(recipeManager: manager));
+
+    expect(find.text('À découvrir'), findsOneWidget);
+    expect(find.text('Pâtes Carbonara Traditionnelles'), findsOneWidget);
+    await tester.tap(find.byTooltip('Afficher les favoris'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Mes favoris'), findsOneWidget);
   });
 
   testWidgets('recipe detail receives its route parameter', (tester) async {
@@ -66,6 +79,8 @@ void main() {
 
   testWidgets('recipe form validates and adds a recipe', (tester) async {
     await tester.pumpWidget(MyApp(recipeManager: manager));
+    await tester.ensureVisible(find.text('Ajouter une recette'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Ajouter une recette'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Sauvegarder'));
